@@ -52,6 +52,33 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Theater-specific status colors
+				standby: {
+					DEFAULT: 'hsl(var(--standby))',
+					foreground: 'hsl(var(--standby-foreground))'
+				},
+				go: {
+					DEFAULT: 'hsl(var(--go))',
+					foreground: 'hsl(var(--go-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				emergency: {
+					DEFAULT: 'hsl(var(--emergency))',
+					foreground: 'hsl(var(--emergency-foreground))'
+				},
+				'stage-control': {
+					DEFAULT: 'hsl(var(--stage-control))',
+					foreground: 'hsl(var(--stage-control-foreground))'
+				},
+				'cue-active': {
+					DEFAULT: 'hsl(var(--cue-active))',
+					foreground: 'hsl(var(--cue-active-foreground))'
+				},
+				'operator-ready': 'hsl(var(--operator-ready))',
+				'operator-not-ready': 'hsl(var(--operator-not-ready))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -88,7 +115,20 @@ export default {
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'standby-pulse': 'pulse 1.5s infinite',
+				'cue-glow': 'pulse 2s infinite'
+			},
+			boxShadow: {
+				'stage': 'var(--shadow-stage)',
+				'cue': 'var(--shadow-cue)',
+				'standby': 'var(--shadow-standby)',
+				'go': 'var(--shadow-go)'
+			},
+			backgroundImage: {
+				'gradient-standby': 'var(--gradient-standby)',
+				'gradient-go': 'var(--gradient-go)',
+				'gradient-control': 'var(--gradient-control)'
 			}
 		}
 	},
