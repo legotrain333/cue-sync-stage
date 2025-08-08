@@ -21,7 +21,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export function StageManagerDashboard() {
+interface StageManagerDashboardProps {
+  onLogout: () => void;
+}
+
+export function StageManagerDashboard({ onLogout }: StageManagerDashboardProps) {
   const [currentCue, setCurrentCue] = useState(1);
   const [cueStatus, setCueStatus] = useState<'waiting' | 'standby' | 'go'>('waiting');
   const [announcement, setAnnouncement] = useState('');
@@ -119,7 +123,7 @@ export function StageManagerDashboard() {
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={onLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>

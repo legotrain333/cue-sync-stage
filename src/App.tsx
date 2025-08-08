@@ -9,21 +9,19 @@ import { RoleSelector } from "@/components/auth/RoleSelector";
 import { StageManagerDashboard } from "@/pages/StageManagerDashboard";
 import { OperatorView } from "@/pages/OperatorView";
 import { DirectorView } from "@/pages/DirectorView";
+import { AdminPanel } from "@/pages/AdminPanel";
+import { mockAuth } from "@/integrations/supabase/client";
+import { User, UserRole } from "@/types/database";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: {
-    id: string;
-    username: string;
-    roles: Array<{
-      id: string;
-      role: 'stage_manager' | 'operator' | 'director' | 'director_plus' | 'admin';
-    }>;
-  } | null;
+  user: User | null;
   selectedRole: string | null;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const App = () => {
@@ -31,27 +29,62 @@ const App = () => {
     isAuthenticated: false,
     user: null,
     selectedRole: null,
+    isLoading: false,
+    error: null,
   });
 
   const handleLogin = async (username: string, password: string) => {
-    // Mock authentication - replace with real Supabase auth
-    if (username && password) {
-      const mockUser = {
-        id: '1',
-        username,
-        roles: [
-          { id: '1', role: 'stage_manager' as const },
-          { id: '2', role: 'operator' as const },
-          { id: '3', role: 'director' as const },
-        ],
-      };
+    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+    
+    try {
+      const user = await mockAuth.signIn(username, password);
       
-      setAuthState({
-        isAuthenticated: true,
-        user: mockUser,
-        selectedRole: mockUser.roles.length === 1 ? mockUser.roles[0].role : null,
-      });
+      if (user) {
+        const formattedUser: User = {
+          id: user.id,
+          username: user.username,
+          email: `${user.username}@theater.local`,
+          roles: user.roles.map(role => ({
+            ...role,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+          })),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        setAuthState({
+          isAuthenticated: true,
+          user: formattedUser,
+          selectedRole: formattedUser.roles.length === 1 ? formattedUser.roles[0].role : null,
+          isLoading: false,
+          error: null,
+        });
+      } else {
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: 'Invalid username or password' 
+        }));
+      }
+    } catch (error) {
+      setAuthState(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        error: 'Login failed. Please try again.' 
+      }));
     }
+  };
+
+  const handleLogout = async () => {
+    await mockAuth.signOut();
+    setAuthState({
+      isAuthenticated: false,
+      user: null,
+      selectedRole: null,
+      isLoading: false,
+      error: null,
+    });
   };
 
   const handleRoleSelect = (role: string) => {
@@ -61,15 +94,21 @@ const App = () => {
     }));
   };
 
+  const handleRoleSwitch = (newRole: string) => {
+    setAuthState(prev => ({ ...prev, selectedRole: newRole }));
+  };
+
   const renderDashboard = () => {
     switch (authState.selectedRole) {
       case 'stage_manager':
-        return <StageManagerDashboard />;
+        return <StageManagerDashboard onLogout={handleLogout} />;
       case 'operator':
-        return <OperatorView />;
+        return <OperatorView onLogout={handleLogout} />;
       case 'director':
+        return <DirectorView onLogout={handleLogout} />;
       case 'director_plus':
-        return <DirectorView />;
+      case 'admin':
+        return <AdminPanel onLogout={handleLogout} onSwitchRole={handleRoleSwitch} />;
       default:
         return <NotFound />;
     }
@@ -86,7 +125,11 @@ const App = () => {
               path="/" 
               element={
                 !authState.isAuthenticated ? (
-                  <LoginForm onLogin={handleLogin} />
+                  <LoginForm 
+                    onLogin={handleLogin} 
+                    isLoading={authState.isLoading}
+                    error={authState.error}
+                  />
                 ) : !authState.selectedRole && authState.user ? (
                   <RoleSelector 
                     roles={authState.user.roles}

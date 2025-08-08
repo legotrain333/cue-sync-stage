@@ -12,7 +12,11 @@ import {
   LogOut
 } from "lucide-react";
 
-export function DirectorView() {
+interface DirectorViewProps {
+  onLogout: () => void;
+}
+
+export function DirectorView({ onLogout }: DirectorViewProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showStartTime] = useState(new Date(Date.now() - 45 * 60 * 1000)); // Started 45 minutes ago
 
@@ -96,7 +100,7 @@ export function DirectorView() {
               <Monitor className="w-4 h-4 mr-2" />
               Switch Role
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={onLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>

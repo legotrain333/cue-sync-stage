@@ -18,7 +18,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export function OperatorView() {
+interface OperatorViewProps {
+  onLogout: () => void;
+}
+
+export function OperatorView({ onLogout }: OperatorViewProps) {
   const [currentCue, setCurrentCue] = useState(3);
   const [cueStatus, setCueStatus] = useState<'waiting' | 'standby' | 'go'>('standby');
   const [isReady, setIsReady] = useState(true);
@@ -82,7 +86,7 @@ export function OperatorView() {
               <CheckCircle className="w-4 h-4 mr-2" />
               {isReady ? "Ready" : "Not Ready"}
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={onLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
