@@ -5,21 +5,58 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Theater } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { SignupForm } from "./SignupForm";
 
 interface LoginFormProps {
-  onLogin: (username: string, password: string) => Promise<void>;
-  isLoading?: boolean;
-  error?: string;
+  onLoginSuccess: () => void;
 }
 
-export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
-  const [username, setUsername] = useState("");
+export function LoginForm({ onLoginSuccess }: LoginFormProps) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onLogin(username, password);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in.",
+        });
+        onLoginSuccess();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (showSignup) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <SignupForm onSwitchToLogin={() => setShowSignup(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -39,23 +76,16 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-foreground">
-                Username
+              <Label htmlFor="email" className="text-foreground">
+                Email
               </Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
                 className="bg-input border-border text-foreground"
                 required
               />
@@ -79,9 +109,17 @@ export function LoginForm({ onLogin, isLoading, error }: LoginFormProps) {
             <Button
               type="submit"
               className="w-full bg-stage-control hover:bg-stage-control/90 text-stage-control-foreground"
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground hover:text-foreground"
+              onClick={() => setShowSignup(true)}
+            >
+              Don't have an account? Sign up
             </Button>
           </form>
         </CardContent>

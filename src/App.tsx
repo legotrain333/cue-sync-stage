@@ -2,115 +2,69 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RoleSelector } from "@/components/auth/RoleSelector";
 import { StageManagerDashboard } from "@/pages/StageManagerDashboard";
 import { OperatorView } from "@/pages/OperatorView";
 import { DirectorView } from "@/pages/DirectorView";
 import { AdminPanel } from "@/pages/AdminPanel";
-import { mockAuth } from "@/integrations/supabase/client";
-import { User, UserRole } from "@/types/database";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-  selectedRole: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
 const App = () => {
-  const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: false,
-    user: null,
-    selectedRole: null,
-    isLoading: false,
-    error: null,
-  });
+  const { user, profile, loading, signOut, isAuthenticated } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
-  const handleLogin = async (username: string, password: string) => {
-    setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      const user = await mockAuth.signIn(username, password);
-      
-      if (user) {
-        const formattedUser: User = {
-          id: user.id,
-          username: user.username,
-          email: `${user.username}@theater.local`,
-          roles: user.roles.map(role => ({
-            ...role,
-            user_id: user.id,
-            created_at: new Date().toISOString(),
-          })),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        setAuthState({
-          isAuthenticated: true,
-          user: formattedUser,
-          selectedRole: formattedUser.roles.length === 1 ? formattedUser.roles[0].role : null,
-          isLoading: false,
-          error: null,
-        });
-      } else {
-        setAuthState(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error: 'Invalid username or password' 
-        }));
-      }
-    } catch (error) {
-      setAuthState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: 'Login failed. Please try again.' 
-      }));
-    }
+  // Auto-select role if user has only one role
+  if (!loading && profile && profile.roles.length === 1 && !selectedRole) {
+    setSelectedRole(profile.roles[0].role);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  const handleRoleSelect = (role: string) => {
+    setSelectedRole(role);
+  };
+
+  const handleRoleSwitch = () => {
+    setSelectedRole(null);
   };
 
   const handleLogout = async () => {
-    await mockAuth.signOut();
-    setAuthState({
-      isAuthenticated: false,
-      user: null,
-      selectedRole: null,
-      isLoading: false,
-      error: null,
-    });
-  };
-
-  const handleRoleSelect = (role: string) => {
-    setAuthState(prev => ({
-      ...prev,
-      selectedRole: role,
-    }));
-  };
-
-  const handleRoleSwitch = (newRole: string) => {
-    setAuthState(prev => ({ ...prev, selectedRole: newRole }));
+    await signOut();
+    setSelectedRole(null);
   };
 
   const renderDashboard = () => {
-    switch (authState.selectedRole) {
-      case 'stage_manager':
-        return <StageManagerDashboard onLogout={handleLogout} />;
-      case 'operator':
-        return <OperatorView onLogout={handleLogout} />;
-      case 'director':
-        return <DirectorView onLogout={handleLogout} />;
-      case 'director_plus':
-      case 'admin':
-        return <AdminPanel onLogout={handleLogout} onSwitchRole={handleRoleSwitch} />;
+    if (!profile || !selectedRole) return null;
+
+    const commonProps = {
+      user: profile,
+      onLogout: handleLogout,
+    };
+
+    switch (selectedRole) {
+      case "stage_manager":
+        return <StageManagerDashboard {...commonProps} />;
+      case "operator":
+        return <OperatorView {...commonProps} />;
+      case "director":
+      case "director_plus":
+        return <DirectorView {...commonProps} />;
+      case "admin":
+        return <AdminPanel {...commonProps} onSwitchRole={handleRoleSwitch} />;
       default:
-        return <NotFound />;
+        return null;
     }
   };
 
@@ -121,25 +75,21 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route 
-              path="/" 
+            <Route
+              path="/"
               element={
-                !authState.isAuthenticated ? (
-                  <LoginForm 
-                    onLogin={handleLogin} 
-                    isLoading={authState.isLoading}
-                    error={authState.error}
-                  />
-                ) : !authState.selectedRole && authState.user ? (
-                  <RoleSelector 
-                    roles={authState.user.roles}
-                    onSelectRole={handleRoleSelect}
-                    username={authState.user.username}
-                  />
-                ) : (
+                !isAuthenticated ? (
+                  <LoginForm onLoginSuccess={() => {}} />
+                ) : selectedRole ? (
                   renderDashboard()
+                ) : (
+                  <RoleSelector
+                    roles={profile?.roles || []}
+                    onSelectRole={handleRoleSelect}
+                    username={profile?.username || ""}
+                  />
                 )
-              } 
+              }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
