@@ -332,6 +332,79 @@ export type Database = {
         }
         Relationships: []
       }
+      session_participants: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          name: string
+          password: string | null
+          session_code: string
+          show_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          password?: string | null
+          session_code: string
+          show_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          password?: string | null
+          session_code?: string
+          show_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shows: {
         Row: {
           created_at: string | null
@@ -401,6 +474,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_session_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
