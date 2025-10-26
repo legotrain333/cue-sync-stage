@@ -101,13 +101,11 @@ const App = () => {
                 ) : needsRoleSelection && sessionId ? (
                   <SessionRoleSelector
                     sessionId={sessionId}
-                    availableRoles={profile?.roles || []}
                     onRoleSelected={handleRoleSelected}
                   />
                 ) : (
                   <SessionSelector
                     username={profile?.username || ""}
-                    hasStageManagerRole={profile?.roles.some(r => r.role === 'stage_manager' || r.role === 'admin') || false}
                     onSessionJoined={handleSessionJoined}
                   />
                 )

@@ -7,7 +7,6 @@ import { Users, Lightbulb, Video, Shield } from "lucide-react";
 
 interface SessionRoleSelectorProps {
   sessionId: string;
-  availableRoles: Array<{ id: string; role: string }>;
   onRoleSelected: (role: string) => void;
 }
 
@@ -44,7 +43,15 @@ const roleConfig: Record<string, { icon: any; title: string; description: string
   },
 };
 
-export const SessionRoleSelector = ({ sessionId, availableRoles, onRoleSelected }: SessionRoleSelectorProps) => {
+export const SessionRoleSelector = ({ sessionId, onRoleSelected }: SessionRoleSelectorProps) => {
+  // All available roles that anyone can choose
+  const allRoles = [
+    { role: "stage_manager" },
+    { role: "operator" },
+    { role: "director" },
+    { role: "director_plus" },
+    { role: "admin" },
+  ];
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -87,14 +94,14 @@ export const SessionRoleSelector = ({ sessionId, availableRoles, onRoleSelected 
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {availableRoles.map((userRole) => {
-              const config = roleConfig[userRole.role];
+            {allRoles.map((role) => {
+              const config = roleConfig[role.role];
               const Icon = config.icon;
               
               return (
                 <Button
-                  key={userRole.id}
-                  onClick={() => handleRoleSelect(userRole.role)}
+                  key={role.role}
+                  onClick={() => handleRoleSelect(role.role)}
                   disabled={loading}
                   className="h-32 flex flex-col items-center justify-center gap-3 relative overflow-hidden group"
                   variant="outline"

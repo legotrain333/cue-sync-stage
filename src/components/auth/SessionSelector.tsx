@@ -9,11 +9,10 @@ import { Loader2 } from "lucide-react";
 
 interface SessionSelectorProps {
   username: string;
-  hasStageManagerRole: boolean;
   onSessionJoined: (sessionId: string, role: string) => void;
 }
 
-export const SessionSelector = ({ username, hasStageManagerRole, onSessionJoined }: SessionSelectorProps) => {
+export const SessionSelector = ({ username, onSessionJoined }: SessionSelectorProps) => {
   const [mode, setMode] = useState<"select" | "start" | "join">("select");
   const [loading, setLoading] = useState(false);
   const [sessionName, setSessionName] = useState("");
@@ -303,15 +302,13 @@ export const SessionSelector = ({ username, hasStageManagerRole, onSessionJoined
           <CardDescription>Choose how you'd like to proceed</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {hasStageManagerRole && (
-            <Button
-              onClick={() => setMode("start")}
-              className="w-full h-20 text-lg"
-              variant="default"
-            >
-              Start New Session
-            </Button>
-          )}
+          <Button
+            onClick={() => setMode("start")}
+            className="w-full h-20 text-lg"
+            variant="default"
+          >
+            Start New Session
+          </Button>
           <Button
             onClick={() => setMode("join")}
             className="w-full h-20 text-lg"
