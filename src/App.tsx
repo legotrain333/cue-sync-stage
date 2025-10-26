@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RoleSelector } from "@/components/auth/RoleSelector";
+import { SessionSelector } from "@/components/auth/SessionSelector";
+import { SessionRoleSelector } from "@/components/auth/SessionRoleSelector";
 import { StageManagerDashboard } from "@/pages/StageManagerDashboard";
 import { OperatorView } from "@/pages/OperatorView";
 import { DirectorView } from "@/pages/DirectorView";
@@ -18,11 +19,8 @@ const queryClient = new QueryClient();
 const App = () => {
   const { user, profile, loading, signOut, isAuthenticated } = useAuth();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-
-  // Auto-select role if user has only one role
-  if (!loading && profile && profile.roles.length === 1 && !selectedRole) {
-    setSelectedRole(profile.roles[0].role);
-  }
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
 
   if (loading) {
     return (
@@ -36,13 +34,31 @@ const App = () => {
     setSelectedRole(role);
   };
 
+  const handleSessionJoined = (joinedSessionId: string, role: string) => {
+    setSessionId(joinedSessionId);
+    if (role) {
+      setSelectedRole(role);
+    } else {
+      setNeedsRoleSelection(true);
+    }
+  };
+
+  const handleRoleSelected = (role: string) => {
+    setSelectedRole(role);
+    setNeedsRoleSelection(false);
+  };
+
   const handleRoleSwitch = () => {
     setSelectedRole(null);
+    setSessionId(null);
+    setNeedsRoleSelection(false);
   };
 
   const handleLogout = async () => {
     await signOut();
     setSelectedRole(null);
+    setSessionId(null);
+    setNeedsRoleSelection(false);
   };
 
   const renderDashboard = () => {
@@ -82,11 +98,17 @@ const App = () => {
                   <LoginForm onLoginSuccess={() => {}} />
                 ) : selectedRole ? (
                   renderDashboard()
+                ) : needsRoleSelection && sessionId ? (
+                  <SessionRoleSelector
+                    sessionId={sessionId}
+                    availableRoles={profile?.roles || []}
+                    onRoleSelected={handleRoleSelected}
+                  />
                 ) : (
-                  <RoleSelector
-                    roles={profile?.roles || []}
-                    onSelectRole={handleRoleSelect}
+                  <SessionSelector
                     username={profile?.username || ""}
+                    hasStageManagerRole={profile?.roles.some(r => r.role === 'stage_manager' || r.role === 'admin') || false}
+                    onSessionJoined={handleSessionJoined}
                   />
                 )
               }
